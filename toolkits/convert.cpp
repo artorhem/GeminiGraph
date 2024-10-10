@@ -19,9 +19,10 @@ int main(int argc, char** argv)
     return -1;
   }
 
-  std::cout << "processing..." << std::endl;
+  // std::cout << "processing..." << std::endl;
   using clock = std::chrono::high_resolution_clock;
   clock::time_point start_time = clock::now();
+  start_time = std::chrono::high_resolution_clock::now();
 
   std::fstream input_csv(argv[1]);
 
@@ -49,15 +50,16 @@ int main(int argc, char** argv)
 
   std::string is_id_continuous = (record.size() == (max_vertex_id - min_vertex_id + 1)) ? "yes" : "no";
   clock::time_point end_time = clock::now();
-  clock::duration duration = end_time - start_time;
+  long double t_secs = std::chrono::duration_cast<std::chrono::duration<double>>(
+                   end_time - start_time).count();
 
-  log("output file: ", output_binary_file_name);
-  log("time cost: ", std::to_string(duration.count()));
+  log("output_file: ", output_binary_file_name);
+  log("time: ", std::to_string(t_secs));
   log("edges: ", edges);
   log("vertices: ", record.size());
-  log("min vertex id: ", min_vertex_id);
-  log("max vertex id: ", max_vertex_id);
-  log("Are all ids continuous: ", is_id_continuous);
+  log("min_vertex_id: ", min_vertex_id);
+  log("max_vertex_id: ", max_vertex_id);
+  // log("Are all ids_continuous: ", is_id_continuous);
 
   input_csv.close();
   output_binary.close();
