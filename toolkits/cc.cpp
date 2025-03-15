@@ -18,6 +18,7 @@ Copyright (c) 2014-2015 Xiaowei Zhu, Tsinghua University
 #include <stdlib.h>
 
 #include "core/graph.hpp"
+#include "core/memcounter.h"
 
 void compute(Graph<Empty> * graph) {
   double exec_time = 0;
@@ -82,10 +83,6 @@ void compute(Graph<Empty> * graph) {
     std::swap(active_in, active_out);
   }
 
-  exec_time += get_time();
-  if (graph->partition_id==0) {
-    printf("exec_time=%lf(s)\n", exec_time);
-  }
 
   graph->gather_vertex_array(label, 0);
   if (graph->partition_id==0) {
@@ -104,21 +101,29 @@ void compute(Graph<Empty> * graph) {
   }
   
   graph->dealloc_vertex_array(label);
+  exec_time += get_time();
+  if (graph->partition_id==0) {
+      printf("exec_time=%lf(s)\n", exec_time);
+  }
   delete active_in;
   delete active_out;
 }
 
 int main(int argc, char ** argv) {
+  _flexograph_profile::MemoryCounter memory_counter;
   MPI_Instance mpi(&argc, &argv);
 
   if (argc<3) {
     printf("cc [file] [vertices]\n");
     exit(-1);
   }
-
+  double read_time = 0;
+  read_time -= get_time();
   Graph<Empty> * graph;
   graph = new Graph<Empty>();
   graph->load_undirected_from_directed(argv[1], std::atoi(argv[2]));
+  read_time += get_time();
+  printf("read_time=%lf(s)\n", read_time);
 
   compute(graph);
   for (int run=0;run<5;run++) {

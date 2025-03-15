@@ -18,7 +18,7 @@ Copyright (c) 2014-2015 Xiaowei Zhu, Tsinghua University
 #include <stdlib.h>
 
 #include "core/graph.hpp"
-
+#include "core/memcounter.h"
 #include <math.h>
 
 const double d = (double)0.85;
@@ -99,11 +99,6 @@ void compute(Graph<Empty> * graph, int iterations) {
     std::swap(curr, next);
   }
 
-  exec_time += get_time();
-  if (graph->partition_id==0) {
-    printf("exec_time=%lf(s)\n", exec_time);
-  }
-
   double pr_sum = graph->process_vertices<double>(
     [&](VertexId vtx) {
       return curr[vtx];
@@ -125,10 +120,15 @@ void compute(Graph<Empty> * graph, int iterations) {
 
   graph->dealloc_vertex_array(curr);
   graph->dealloc_vertex_array(next);
+  exec_time += get_time();
+  if (graph->partition_id==0) {
+      printf("exec_time=%lf(s)\n", exec_time);
+  }
   delete active;
 }
 
 int main(int argc, char ** argv) {
+  _flexograph_profile::MemoryCounter memory_counter;
   MPI_Instance mpi(&argc, &argv);
 
   if (argc<4) {
@@ -136,9 +136,13 @@ int main(int argc, char ** argv) {
     exit(-1);
   }
 
+  double read_time = 0;
+  read_time -= get_time();
   Graph<Empty> * graph;
   graph = new Graph<Empty>();
   graph->load_directed(argv[1], std::atoi(argv[2]));
+  read_time += get_time();
+  printf("read_time=%lf(s)\n", read_time);
   int iterations = std::atoi(argv[3]);
 
   compute(graph, iterations);

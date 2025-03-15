@@ -411,10 +411,16 @@ int main(int argc, char ** argv) {
     exit(-1);
   }
 
+  double read_time = 0;
+  read_time -= get_time();
+
   Graph<Empty> * graph;
   graph = new Graph<Empty>();
   VertexId root = std::atoi(argv[3]);
   graph->load_directed(argv[1], std::atoi(argv[2]));
+
+  read_time += get_time();
+  printf("read_time=%lf(s)\n", read_time);
 
   #if COMPACT
   compute_compact(graph, root);
