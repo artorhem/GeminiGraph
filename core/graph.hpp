@@ -143,6 +143,23 @@ public:
   Graph() {
     threads = numa_num_configured_cpus();
     sockets = numa_num_configured_nodes();
+
+    // Check if we have access to all configured nodes
+    // In containers with limited NUMA access, we may only have access to node 0
+    // Detect this by checking numa_bitmask_isbitset on numa_get_mems_allowed()
+    struct bitmask* allowed_nodes = numa_get_mems_allowed();
+    int available_sockets = 0;
+    for (int i = 0; i < sockets; i++) {
+      if (numa_bitmask_isbitset(allowed_nodes, i)) {
+        available_sockets++;
+      }
+    }
+    if (available_sockets < sockets) {
+      std::cout << "WARNING: Only " << available_sockets << " of " << sockets
+                << " NUMA nodes are accessible. Limiting to available nodes." << std::endl;
+      sockets = available_sockets;
+    }
+
     std::cout << threads <<"\t" << sockets <<std::endl;
     threads_per_socket = threads / sockets;
     std::cout << "threads_persocket " << threads_per_socket <<std::endl;
